@@ -341,13 +341,13 @@ cie::DoubleMatrix Scan(std::vector<double> x_coordinates, std::vector<double> y_
 }
 
 // returns 1 if test point defined by (x,y) is inside rectangle defined by (x1_, x2_, y1_, y2_). Otherwise, returns 0
-bool inside(double x, double y, double x1_, double x2_, double y1_, double y2_)
+bool insideRectangle(double x, double y, double x1_, double x2_, double y1_, double y2_)
 {
 	return x >= x1_ && x <= x2_ && y >= y1_ && y <= y2_;
 }
 
 //// ------------------------------------------------------------------------------------------------------------
-//// function that finds if the line segment defined by 2 points cuts the rectangle defined by 2 points
+//// function that determines if the line segment defined by 2 points cuts the rectangle defined by 2 points
 //// combination of two edge point
 bool doesItCut(cie::VEKTOR vktLine1, cie::VEKTOR vktLine2, cie::VEKTOR vktRect1, cie::VEKTOR vktRect2)
 {
@@ -372,17 +372,22 @@ bool doesItCut(cie::VEKTOR vktLine1, cie::VEKTOR vktLine2, cie::VEKTOR vktRect1,
 	//cie::VEKTOR upperRight(x2, y2);
 	//cie::VEKTOR upperLeft(x1, y2);
 
+	// initialize x and y increment, used to discretize the line
 	double x_increment = 0.;
 	double y_increment = 0.;
+
+	// find x and y increment by dividing x length and y length by desired # of discretizations
 	x_increment = (x2_line - x1_line) / numberOfDiscretization;
 	y_increment = (y2_line - y1_line) / numberOfDiscretization;
 
+	// loop across discretizations and run "inside" function until an intersection is found
 	for (int i = 0; i < numberOfDiscretization; ++i)
 	{
-		if (inside(x1_line, y1_line, x1_rect, x2_rect, y1_rect, y2_rect) == 1)
+		if (insideRectangle(x1_line, y1_line, x1_rect, x2_rect, y1_rect, y2_rect) == 1)
 		{
 			return true;
 		}
+		// increment x and y coordinate by the calculated increment
 		x1_line += x_increment;
 		y1_line += y_increment;
 	}
@@ -1042,23 +1047,23 @@ int main()
 	cie::DoubleMatrix picture_6 = Scan(x_coordinates, y_coordinates, 10, 5, center);
 	cie::print_dots(picture_6);
 
+	// instantiate four coordinates which form the four corners of a rectangle
 	cie::VEKTOR bottomLeftPoint(5.5,7.5);
 	cie::VEKTOR topLeftPoint(5.5, 11.5);
 	cie::VEKTOR topRightPoint(12.5, 11.5);
 	cie::VEKTOR bottomRightPoint(12.5, 7.5);
 
+	// construct an "inputPolygon" with a vector of coordinates. NOTE: must be constructed in a
+	// consecutive manner! Can't construct top, bottom, left, right side for instance
 	std::vector<cie::VEKTOR> inputPolygon;
 	inputPolygon.push_back(topLeftPoint);
 	inputPolygon.push_back(bottomLeftPoint);
-	inputPolygon.push_back(topRightPoint);
 	inputPolygon.push_back(bottomRightPoint);
+	inputPolygon.push_back(topRightPoint);
 
+	std::cout << "The next matrix is the result of the line cutting algorithm: " << std::endl;
 
-
-
-
-
-	std::cout << "The next matrix is the new one: " << std::endl;
+	// run the algorithm on the constructed polygon and print the result
 	cie::DoubleMatrix picture_7 = Scan(inputPolygon,40,40,center);
 	cie::print_dots(picture_7);
 	
