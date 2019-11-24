@@ -324,6 +324,8 @@ cie::DoubleMatrix Scan(std::vector<double> x_coordinates, std::vector<double> y_
 			// scaning is row-wise along x-coordinate
 			cie::VEKTOR v1(bin_width * y, bin_width * x);
 			cie::VEKTOR v2(bin_width * (y + 1), bin_width * (x + 1));
+			//cie::VEKTOR v1(bin_width * x, bin_width * y);
+			//cie::VEKTOR v2(bin_width * (x + 1), bin_width * (y + 1));
 			v1 = v1 + null;
 			v2 = v2 + null;
 
@@ -338,125 +340,159 @@ cie::DoubleMatrix Scan(std::vector<double> x_coordinates, std::vector<double> y_
 	return result;
 }
 
-
+// returns 1 if test point defined by (x,y) is inside rectangle defined by (x1_, x2_, y1_, y2_). Otherwise, returns 0
+bool inside(double x, double y, double x1_, double x2_, double y1_, double y2_)
+{
+	return x >= x1_ && x <= x2_ && y >= y1_ && y <= y2_;
+}
 
 //// ------------------------------------------------------------------------------------------------------------
 //// function that finds if the line segment defined by 2 points cuts the rectangle defined by 2 points
 //// combination of two edge point
-//bool doesItCut(cie::VEKTOR vktLine1, cie::VEKTOR vktLine2, cie::VEKTOR vktRect1, cie::VEKTOR vktRect2)
-//{
-//	// find min -> bottom left point of bounding box
-//	double x1 = std::min(vktRect1.x(), vktRect2.x());
-//	double y1 = std::min(vktRect1.y(), vktRect2.y());
-//	// find max -> upper right point of bounding box
-//	double x2 = std::max(vktRect1.x(), vktRect2.x());
-//	double y2 = std::max(vktRect1.y(), vktRect2.y());
-//
-//	// define all edges of the bounding box - "pixel"
-//	cie::VEKTOR bottomLeft(x1, y1);
-//	cie::VEKTOR bottomRight(x2, y1);
-//	cie::VEKTOR upperRight(x2, y2);
-//	cie::VEKTOR upperLeft(x1, y2);
-//
-//	// check crossing for each line segment on a rectangle
-//	if (comparisonFunction(vktLine1, vktLine2, bottomLeft, bottomRight) == true)
-//	{
-//		return true;
-//	}
-//	if (comparisonFunction(vktLine1, vktLine2, bottomRight, upperRight) == true)
-//	{
-//		return true;
-//	}
-//	if (comparisonFunction(vktLine1, vktLine2, upperRight, upperLeft) == true)
-//	{
-//		return true;
-//	}
-//	if (comparisonFunction(vktLine1, vktLine2, upperLeft, bottomLeft) == true)
-//	{
-//		return true;
-//	}
-//	// if they all fail return false for no crossing
-//	return false;
-//
-//}
-//
-//// function that checks if the points from the list of coordinates
-//// input list of point to check and two vectors of bounding box
-//bool doesItCut(std::vector<cie::VEKTOR>& inputPolygon, cie::VEKTOR vkt1, cie::VEKTOR vkt2)
-//{
-//	// new variable so input can be passed as a reference
-//	std::vector<cie::VEKTOR> polygon = inputPolygon;
-//	// add the fist element to the last place to ease calculations - closed loop
-//	polygon.push_back(polygon[0]);
-//
-//	// loop over the whole list of edges
-//	for (int n = 0; n < polygon.size() - 1; ++n)
-//	{
-//		// create a test line segment
-//		cie::VEKTOR vktLine1(polygon[n].x(), polygon[n].y());
-//		cie::VEKTOR vktLine2(polygon[n + 1].x(), polygon[n + 1].y());
-//
-//		// check each point if it is inside
-//		if (doesItCut(vktLine1, vktLine2, vkt1, vkt2) == true)
-//		{
-//			// function returns true when first such point is found
-//			return true;
-//		}
-//	}
-//	return false;
-//}
-//
-//
-//// function that "scans" a sqare area of points around a specified origin and returns a matrix of 1s and 0s
-//// points are given in term of a counterclockwise or clockwise defined polygon
-//cie::DoubleMatrix Scan(std::vector<cie::VEKTOR>& inputPolygon, double size, int resolution, cie::VEKTOR center)
-//{
-//	// new variable so input can be passed as a reference
-//	std::vector<cie::VEKTOR> testPolygon = inputPolygon;
-//	// add the fist element to the last place to ease calculations - closed loop
-//	testPolygon.push_back(testPolygon[0]);
-//
-//	// initialize a square matrix of results - zero intialized
-//	cie::DoubleMatrix result(resolution, resolution);
-//
-//	// calculate the width of one bin
-//	double bin_width = size / resolution;
-//
-//	// calculate the null vector of the matrix - position of (0,0)
-//	cie::VEKTOR center_offset(size / 2.0, size / 2.0);
-//	cie::VEKTOR null = center - center_offset;
-//
-//	// WARNING - I am not sure about mirroring and orientation of the picture with
-//	// respect to the global coordiante system
-//
-//	// scan along x-coordinate -> j
-//	for (int x = 0; x < resolution; ++x)
-//	{
-//		// scan along y-coordinate -> i
-//		for (int y = 0; y < resolution; ++y)
-//		{
-//			// calculate the v1 and v2 vector - min and max of data bin
-//			// scaning is row-wise along x-coordinate
-//			cie::VEKTOR vkt1(bin_width * y, bin_width * x);
-//			cie::VEKTOR vkt2(bin_width * (y + 1), bin_width * (x + 1));
-//			vkt1 = vkt1 + null;
-//			vkt2 = vkt2 + null;
-//
-//			// call inside funcition that check the entire list if the point is inside
-//			if (doesItCut(testPolygon, vkt1, vkt2) == true)
-//			{
-//				// invert the result as printing occurs in reverse order
-//				result.at(resolution - 1 - x, y) = 1;
-//			}
-//			else 
-//			{
-//				result.at(resolution - 1 - x, y) = 0;
-//			}
-//			
-//		}
-//	}
-//	return result;
-//}
+bool doesItCut(cie::VEKTOR vktLine1, cie::VEKTOR vktLine2, cie::VEKTOR vktRect1, cie::VEKTOR vktRect2)
+{
+	int numberOfDiscretization = 100;
+	// find min -> bottom left point of bounding box
+	double x1_rect = std::min(vktRect1.x(), vktRect2.x());
+	double y1_rect = std::min(vktRect1.y(), vktRect2.y());
+	// find max -> upper right point of bounding box
+	double x2_rect = std::max(vktRect1.x(), vktRect2.x());
+	double y2_rect = std::max(vktRect1.y(), vktRect2.y());
+
+	// find min -> bottom left point of line
+	double x1_line = std::min(vktLine1.x(), vktLine2.x());
+	double y1_line = std::min(vktLine1.y(), vktLine2.y());
+	// find max -> upper right point of line
+	double x2_line = std::max(vktLine1.x(), vktLine2.x());
+	double y2_line = std::max(vktLine1.y(), vktLine2.y());
+
+	// define all edges of the bounding box - "pixel"
+	//cie::VEKTOR bottomLeft(x1, y1);
+	//cie::VEKTOR bottomRight(x2, y1);
+	//cie::VEKTOR upperRight(x2, y2);
+	//cie::VEKTOR upperLeft(x1, y2);
+
+	double x_increment = 0.;
+	double y_increment = 0.;
+	x_increment = (x2_line - x1_line) / numberOfDiscretization;
+	y_increment = (y2_line - y1_line) / numberOfDiscretization;
+
+	for (int i = 0; i < numberOfDiscretization; ++i)
+	{
+		if (inside(x1_line, y1_line, x1_rect, x2_rect, y1_rect, y2_rect) == 1)
+		{
+			return true;
+		}
+		x1_line += x_increment;
+		y1_line += y_increment;
+	}
+	return false;
+
+	//// check crossing for each line segment on a rectangle
+	//if (comparisonFunction(vktLine1, vktLine2, bottomLeft, bottomRight) == true)
+	//{
+	//	return true;
+	//}
+	//if (comparisonFunction(vktLine1, vktLine2, bottomRight, upperRight) == true)
+	//{
+	//	return true;
+	//}
+	//if (comparisonFunction(vktLine1, vktLine2, upperRight, upperLeft) == true)
+	//{
+	//	return true;
+	//}
+	//if (comparisonFunction(vktLine1, vktLine2, upperLeft, bottomLeft) == true)
+	//{
+	//	return true;
+	//}
+	//// if they all fail return false for no crossing
+	//return false;
+
+}
+
+// function that checks if the points from the list of coordinates
+// input list of point to check and two vectors of bounding box
+bool doesItCut(std::vector<cie::VEKTOR>& inputPolygon, cie::VEKTOR vkt1, cie::VEKTOR vkt2)
+{
+	// new variable so input can be passed as a reference
+	std::vector<cie::VEKTOR> polygon = inputPolygon;
+	// add the fist element to the last place to ease calculations - closed loop
+	polygon.push_back(polygon[0]);
+
+	// loop over the whole list of edges
+	for (int n = 0; n < polygon.size() - 1; ++n)
+	{
+		// create a test line segment
+		cie::VEKTOR vktLine1(polygon[n].x(), polygon[n].y());
+		cie::VEKTOR vktLine2(polygon[n + 1].x(), polygon[n + 1].y());
+
+		// check each point if it is inside
+		if (doesItCut(vktLine1, vktLine2, vkt1, vkt2) == true)
+		{
+			// function returns true when first such point is found
+			return true;
+		}
+	}
+	return false;
+}
+
+
+// function that "scans" a square area of points around a specified origin and returns a matrix of 1s and 0s
+// points are given in term of a counterclockwise or clockwise defined polygon
+cie::DoubleMatrix Scan(std::vector<cie::VEKTOR>& inputPolygon, double size, int resolution, cie::VEKTOR center)
+{
+	// new variable so input can be passed as a reference
+	std::vector<cie::VEKTOR> testPolygon = inputPolygon;
+	// add the fist element to the last place to ease calculations - closed loop
+	testPolygon.push_back(testPolygon[0]);
+
+	// initialize a square matrix of results - zero intialized
+	cie::DoubleMatrix result(resolution, resolution);
+
+	// calculate the width of one bin
+	double bin_width = size / resolution;
+
+	// calculate the null vector of the matrix - position of (0,0)
+	cie::VEKTOR center_offset(size / 2.0, size / 2.0);
+	//cie::VEKTOR center_offset(3.5 , 1.5);
+
+	cie::VEKTOR null = center - center_offset;
+
+	// WARNING - I am not sure about mirroring and orientation of the picture with
+	// respect to the global coordiante system
+
+	// scan along x-coordinate -> j
+	for (int x = 0; x < resolution; ++x)
+	{
+		// scan along y-coordinate -> i
+		for (int y = 0; y < resolution; ++y)
+		{
+			// calculate the v1 and v2 vector - min and max of data bin
+			// scaning is row-wise along x-coordinate
+			cie::VEKTOR vkt1(bin_width * y, bin_width * x);
+			cie::VEKTOR vkt2(bin_width * (y + 1), bin_width * (x + 1));
+			//cie::VEKTOR vkt1(bin_width * x, bin_width * y);
+			//cie::VEKTOR vkt2(bin_width * (x + 1), bin_width * (y + 1));
+			vkt1 = vkt1 + null;
+			vkt2 = vkt2 + null;
+
+			// call inside funcition that check the entire list if the point is inside
+			if (doesItCut(testPolygon, vkt1, vkt2) == true)
+			{
+				// invert the result as printing occurs in reverse order
+				result.at(resolution - 1 - x, y) = 1;
+				//result.at(x, y) = 1;
+			}
+			else 
+			{
+				result.at(resolution - 1 - x, y) = 0;
+				//result.at(x, y) = 0;
+			}
+			
+		}
+	}
+	return result;
+}
 
 
 
@@ -785,78 +821,78 @@ std::vector<cie::VEKTOR> calculateMinimalRectangle(std::vector<cie::VEKTOR>& inp
 int main()
 {
 	//// input data as a matrix that contains the number of point in each bin
-	//cie::DoubleMatrix data(8, 8);
+	cie::DoubleMatrix data(8, 8);
 
-	//data.at(0, 3) = 1;
-	//data.at(1, 3) = 1;
-	//data.at(2, 1) = 1;
-	//data.at(2, 3) = 1;
-	//data.at(3, 1) = 1;
-	//data.at(3, 2) = 1;
-	//data.at(3, 3) = 1;
+	data.at(0, 3) = 1;
+	data.at(1, 3) = 1;
+	data.at(2, 1) = 1;
+	data.at(2, 3) = 1;
+	data.at(3, 1) = 1;
+	data.at(3, 2) = 1;
+	data.at(3, 3) = 1;
 
-	//data.at(1, 5) = 1;
-	//data.at(2, 5) = 1;
-	//data.at(2, 6) = 1;
-	//data.at(2, 7) = 1;
+	data.at(1, 5) = 1;
+	data.at(2, 5) = 1;
+	data.at(2, 6) = 1;
+	data.at(2, 7) = 1;
 
-	//data.at(5, 2) = 1;
-	//data.at(6, 2) = 1;
-	//data.at(6, 3) = 1;
-	//data.at(7, 2) = 1;
+	data.at(5, 2) = 1;
+	data.at(6, 2) = 1;
+	data.at(6, 3) = 1;
+	data.at(7, 2) = 1;
 
-	//data.at(4, 5) = 1;
-	//data.at(5, 4) = 1;
-	//data.at(5, 5) = 1;
-	//data.at(5, 6) = 1;
-	//data.at(6, 6) = 1;
-	//data.at(5, 7) = 1;
-	//data.at(2, 0) = 1;
+	data.at(4, 5) = 1;
+	data.at(5, 4) = 1;
+	data.at(5, 5) = 1;
+	data.at(5, 6) = 1;
+	data.at(6, 6) = 1;
+	data.at(5, 7) = 1;
+	data.at(2, 0) = 1;
 
-	//// print the data
-	//cie::print(data);
+	// print the data
+	cie::print(data);
 
-	//// converts the data into a list of interesting points
-	//// initialize rows and column indicies and group number (zero for unchanged data)
-	//std::vector<int> rows_i;
-	//std::vector<int> columns_j;
-	//std::vector<int> GroupNumber;
+	// converts the data into a list of interesting points
+	// initialize rows and column indicies and group number (zero for unchanged data)
+	std::vector<int> rows_i;
+	std::vector<int> columns_j;
+	std::vector<int> GroupNumber;
 
-	//// create a vector of size 3
-	//std::vector<std::vector<int>> InterestingPoints(3);
+	// create a vector of size 3
+	std::vector<std::vector<int>> InterestingPoints(3);
 
-	//// scan the matrix to find non-zero entries (find points of interest)
-	//for (int i = 0; i < data.numberOfRows(); ++i)
-	//{
-	//	for (int j = 0; j < data.numberOfColumns(); ++j)
-	//	{
-	//		if (data.at(i, j) != 0)
-	//		{
-	//			// store indices
-	//			rows_i.push_back(i); 
-	//			columns_j.push_back(j);
-	//			// store default group number
-	//			GroupNumber.push_back(0);
-	//		}
-	//	}
-	//}
+	// scan the matrix to find non-zero entries (find points of interest)
+	for (int i = 0; i < data.numberOfRows(); ++i)
+	{
+		for (int j = 0; j < data.numberOfColumns(); ++j)
+		{
+			if (data.at(i, j) != 0)
+			{
+				// store indices
+				rows_i.push_back(i); 
+				columns_j.push_back(j);
+				// store default group number
+				GroupNumber.push_back(0);
+			}
+		}
+	}
 
-	//InterestingPoints[0] = rows_i;
-	//InterestingPoints[1] = columns_j;
-	//InterestingPoints[2] = GroupNumber;
+	InterestingPoints[0] = rows_i;
+	InterestingPoints[1] = columns_j;
+	InterestingPoints[2] = GroupNumber;
 
-	//// find groups of points
-	//FindGroups(InterestingPoints);
+	// find groups of points
+	FindGroups(InterestingPoints);
 
-	//// print function for InterestingPoints
-	//for (int i = 0; i < InterestingPoints[0].size(); ++i)
-	//{
-	//	for (int j = 0; j < 3; ++j)
-	//	{
-	//		std::cout << InterestingPoints[j][i] << ",";
-	//	}
-	//	std::cout << std::endl;
-	//}
+	// print function for InterestingPoints
+	for (int i = 0; i < InterestingPoints[0].size(); ++i)
+	{
+		for (int j = 0; j < 3; ++j)
+		{
+			std::cout << InterestingPoints[j][i] << ",";
+		}
+		std::cout << std::endl;
+	}
 
 
 
@@ -991,8 +1027,8 @@ int main()
 
 
 	// intialize vectors of coordiantes
-	std::vector<double> x_coordinates{ 5.5, 5.5, 5.5, 5.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5, 12.5, 12.5, 12.5, 12.5, 11.5, 10.5, 9.5, 8.5, 7.5, 6.5 };
-	std::vector<double> y_coordinates{ 7.5, 8.5, 9.5, 10.5, 11.5, 11.5, 11.5, 11.5, 11.5, 11.5, 11.5, 11.5, 10.5, 9.5, 8.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5 };
+	std::vector<double> x_coordinates{ 5.5, 5.5, 5.5, 5.5,  5.5,  6.5,  7.5,  8.5,  9.5,  10.5, 11.5, 12.5, 12.5, 12.5, 12.5, 12.5, 11.5, 10.5, 9.5, 8.5, 7.5, 6.5 };
+	std::vector<double> y_coordinates{ 7.5, 8.5, 9.5, 10.5, 11.5, 11.5, 11.5, 11.5, 11.5, 11.5, 11.5, 11.5, 10.5, 9.5,  8.5,  7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5 };
 
 	//std::vector<double> x_coordinates{ 5.1, 5.2, 5.3, 5.4, 5.5, 6.1, 7.2, 8.3, 9.4, 10.5, 11.1, 12.2, 12.3, 12.4, 12.5, 12.1, 11.2, 10.3, 9.4, 8.5, 7.1, 6.2 };
 	//std::vector<double> y_coordinates{ 7.1, 8.2, 9.3, 10.4, 11.5, 11.1, 11.2, 11.3, 11.4, 11.5, 11.1, 11.2, 10.3, 9.4, 8.5, 7.1, 7.2, 7.3, 7.4, 7.5, 7.1, 7.2 };
@@ -1005,6 +1041,26 @@ int main()
 
 	cie::DoubleMatrix picture_6 = Scan(x_coordinates, y_coordinates, 10, 5, center);
 	cie::print_dots(picture_6);
+
+	cie::VEKTOR bottomLeftPoint(5.5,7.5);
+	cie::VEKTOR topLeftPoint(5.5, 11.5);
+	cie::VEKTOR topRightPoint(12.5, 11.5);
+	cie::VEKTOR bottomRightPoint(12.5, 7.5);
+
+	std::vector<cie::VEKTOR> inputPolygon;
+	inputPolygon.push_back(topLeftPoint);
+	inputPolygon.push_back(bottomLeftPoint);
+	inputPolygon.push_back(topRightPoint);
+	inputPolygon.push_back(bottomRightPoint);
+
+
+
+
+
+
+	std::cout << "The next matrix is the new one: " << std::endl;
+	cie::DoubleMatrix picture_7 = Scan(inputPolygon,40,40,center);
+	cie::print_dots(picture_7);
 	
 	// calculate HU moments for picture 5
 	std::array<double, 7> HU_5 = HU_moments(picture_5);
@@ -1064,8 +1120,10 @@ int main()
 
 	std::cout << calculatePolygonArea(arrayOfPoints) << std::endl;
 
-	/*std::array<double, 3> circle =  calculateCircle(arrayOfPoints[0], arrayOfPoints[1], arrayOfPoints[2]);
-	std::cout << "x = " << circle[0] << ", y = " << circle[1] << ", r^2 = " << circle[2] << std::endl;*/
+	/*
+	std::array<double, 3> circle =  calculateCircle(arrayOfPoints[0], arrayOfPoints[1], arrayOfPoints[2]);
+	std::cout << "x = " << circle[0] << ", y = " << circle[1] << ", r^2 = " << circle[2] << std::endl;
+	*/
 
 	std::cout << "angle = " << calculateAngle(cie::VEKTOR(1, 0), cie::VEKTOR(4, -1)) << std::endl;
 
